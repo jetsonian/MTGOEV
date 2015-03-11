@@ -1,52 +1,64 @@
-<?php
-	
-	$price_list = "./prices_6.txt";
-
-	$scraped_prices = array();
-
-	if ( file_exists ( $price_list ) )
+<?php	
+	function scrape_supernovabots_boosterprice ( $price_list )
 	{
-//		echo "file exists<br/>";
-		$booster_price_file = file_get_contents ( $price_list );
-//		echo "file read<br/>";
-//		echo $booster_price_file;
-		$price_array = preg_split ( "/[\s]+/", $booster_price_file );
-
-		$i = 0;
-		
-		while ( $price_array[$i][0] != '=' )
+		$scraped_prices = array();
+		if ( $booster_price_file = file_get_contents ( $price_list ) )
 		{
-			$i++;
-		}
-		$i += 3;
-//		echo $price_array[$i] . "<br/>";
-		while ( $i < count ( $price_array ) )
-		{
-			if ( $price_array[$i][0] == '[')
+			$price_array = preg_split ( "/[\s]+/", $booster_price_file );
+			$i = 0;
+			while ( $price_array[$i][0] != '=' )
 			{
-//				echo substr( $price_array[$i], 1, 3 ) . "<br/>";
-				$temp_code = substr( $price_array[$i], 1, strlen ( $price_array[$i] ) - 2 );
-				$temp_buy = (double) $price_array[$i+1];
-				$temp_sell = (double) $price_array[$i+2];
-
-				$new_size = array_push ( $scraped_prices, array ( $temp_code, $temp_buy, $temp_sell ) );
-
-//				$temp_set = array ( $temp_code, $temp_buy, $temp_sell );
-//				echo $temp_set[0] . " ";
-//				echo $temp_set[1] . " ";
-//				echo $temp_set[2] . "<br/>";
-
-				$i += 2;
+				$i++;
 			}
-			$i++;
+			$i += 3;
+			while ( $i < count ( $price_array ) )
+			{
+				if ( substr( $price_array[$i], 0, 1 ) ==  "[" )
+				{
+					$temp_code = substr( $price_array[$i], 1, strlen ( $price_array[$i] ) - 2 );
+					$temp_buy = (double) $price_array[$i+1];
+					$temp_sell = (double) $price_array[$i+2];
+					$new_size = array_push ( $scraped_prices, array ( $temp_code, $temp_buy, $temp_sell ) );
+					$i += 2;
+				}
+				$i++;
+			}
+/*			for ($j = 0; $j < count ( $scraped_prices ); $j+=1 )
+			{
+				echo $j . ": ";
+				echo $scraped_prices[$j][0] . " ";
+				echo $scraped_prices[$j][1] . " ";
+				echo $scraped_prices[$j][2] . "<br/>";
+			}
+*/			return $scraped_prices;
 		}
-		for ($j = 0; $j < count ( $scraped_prices ); $j+=1 )
+		else
 		{
-			echo $j . ": ";
-			echo $scraped_prices[$j][0] . " ";
-			echo $scraped_prices[$j][1] . " ";
-			echo $scraped_prices[$j][2] . "<br/>";
+			return false;
 		}
 	}
 
+	$price_list = 'http://www.supernovabots.com/prices_6.txt';
+	$scraped_list = scrape_supernovabots_boosterprice( $price_list );
+
+	$db_host = "localhost";
+	$db_name = "mtgoev";
+	$db_user = "mtgoev";
+	$db_pass = "password";
+
+	$db_connection = new mysqli ( $db_host, $db_user, $db_pass, $db_name );
+
+	$db_query = "TRUNCATE TABLE prices";
+	$db_result = $db_connection->query ( $db_query );
+
+	foreach ( $scraped_list as $entry )
+	{
+		$db_query = "INSERT INTO prices ( code, snb_buy, snb_sell ) VALUES ( '"  .
+			$entry[0] . "', " .
+			$entry[1] . ", " . 
+			$entry[2] . " )";
+		$db_result = $db_connection->query ( $db_query );
+	}
+
+	$db_connection->close ();
 ?>
