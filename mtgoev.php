@@ -66,7 +66,7 @@
 				$ev = ( ( 2 * $pack_prices[0] + 3 * $pack_prices[1] + 3 * $pack_prices[2] ) * pow( $win_percentage, 3 ) ) +
 					( ( 2 * $pack_prices[0] + $pack_prices[1] + $pack_prices[2] ) *  pow( $win_percentage, 2 ) * ( 1 - $win_percentage ) );
 			}
-		} elseif ( $format = "4-3-2-2" )
+		} elseif ( $format == "4-3-2-2" )
 		{
 			if ( $entry[0] == $entry[1] && $entry[1] == $entry[2] )
 			{
@@ -87,15 +87,73 @@
 					+ ( ( $pack_prices[0] + $pack_prices[1] + $pack_prices[2] ) *  pow( $win_percentage, 2 ) * ( 1 - $win_percentage ) )
 					+ ( ( $pack_prices[0] + $pack_prices[1] ) * ( $win_percentage * ( 1 - $win_percentage ) ) );
 			}
+		} elseif ( $format == "swiss" )
+		{
+			if ( $entry[0] == $entry[1] && $entry[1] == $entry[2] )
+			{
+				$ev = ( 3 * $pack_prices[0] * pow( $win_percentage, 3 ) )
+					+ ( 2 * $pack_prices[0] * pow( $win_percentage, 2 ) * ( 1 - $win_percentage ) )
+					+ ( 1 * $pack_prices[0] * $win_percentage * pow ( 1 - $win_percentage, 2 ) );
+			}
+			elseif ( $entry[0] != $entry[1] && $entry[1] == $entry[2] )
+			{	
+				$ev = ( ( 2 * $pack_prices[1] + $pack_prices[0] ) * pow ( $win_percentage, 3 ) )
+					+ ( ( $pack_prices[1] + $pack_prices[0] ) * pow( $win_percentage, 2 ) * ( 1 - $win_percentage ) )
+					+ ( $pack_prices[1] * $win_percentage * pow ( 1 - $win_percentage, 2) );
+			}
+			else
+			{
+				$ev = ( ( $pack_prices[2] + $pack_prices[1] + $pack_prices[0] ) * pow( $win_percentage, 3) ) +
+					+ ( ( $pack_prices[2] + $pack_prices[1] ) * pow( $win_percentage, 2 ) * ( 1 - $win_percentage ) )
+					+ ( $pack_prices[1] * $win_percentage * pow( 1 - $win_percentage, 2 ) );
+			}
 		}
 
 		return $ev;
 	}
 
+	function calculate_prize_value_sealed ( $price_list, $entry, $win_percentage, $format )
+	{
+		$pack_prices = array ( );
+		$ev = 0.00;
+
+		foreach ( $entry as $pack )
+		{
+			$pack_price = find_price ( $price_list, $pack, "buy" );
+			array_push ( $pack_prices, $pack_price );
+
+		}
+
+		if ( $format == "4-pack" )
+		{
+			if ( $entry[0] == $entry[2] && $entry[1] == $entry[3] )
+			{
+				$ev = ( 6 * $pack_prices[0] * pow( $win_percentage, 3 ) )
+					+ ( 3 * $pack_prices[0] * pow( $win_percentage, 2 ) * ( 1 - $win_percentage ) )
+					+ ( 1 * $pack_prices[0] * $win_percentage * ( 1 - $win_percentage ) );
+			} elseif ( $entry[0] == $entry[1] && $entry[0] != $entry[2] )
+			{
+				$ev = ( ( 3 * $pack_prices[2] + 3 * $pack_prices[0] ) * pow( $win_percentage, 3 ) )
+					+ ( ( 2 * $pack_prices[2] + $pack_prices[0] ) * pow( $win_percentage, 2 ) * ( 1 - $win_percentage ) )
+					+ ( $pack_prices[0] * $win_percentage * pow( 1 - $win_percentage, 2 ) );
+			}
+		}
+		elseif ( $format = "6-pack" )
+		{
+			
+		}
+		elseif ( $format = "daily" )
+		{
+
+		}
+
+		return $ev
+	}
+
 	$price_list = get_db_prices ( );
 
-	$entry = array ( "M15", "M15", "M15" );
-	$format = "4-3-2-2";
+	$entry = array ( "JOU", "BNG", "THS" );
+	$format = "swiss";
 
 	for ( $i = 0.00; $i <= 100.00; $i++ )
 	{ 
