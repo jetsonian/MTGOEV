@@ -15,7 +15,7 @@
 
 		while ( $db_row = $db_result->fetch_row ( ) )
 		{
-			$temp_array = array ( $db_row[1], $db_row[2], $db_row[3] );
+			$temp_array = array ( $db_row[1], $db_row[2], $db_row[3], $db_row[4] );
 			array_push ( $price_list, $temp_array );
 		}
 
@@ -30,8 +30,14 @@
 			{
 				if ( $price_type == "buy" )
 					return $set[1];
-				else
+				elseif ( $price_type = "sell" )
+				{
 					return $set[2];
+				}
+				elseif ( $price_type = "wotc" )
+				{
+					return $set[3];
+				}
 			}
 		}
 		return false;
@@ -79,13 +85,13 @@
 			{	
 				$ev = ( ( 3 * $pack_prices[1] + 1 * $pack_prices[0] ) * pow( $win_percentage, 3 ) )
 					+ ( ( 2 * $pack_prices[1] + 1 * $pack_prices[0] ) * pow( $win_percentage, 2 ) * ( 1 - $win_percentage ) )
-					+ ( ( $pack_prices[1] + $pack_prices[0] ) * ( $win_percentage * ( 1 - $win_percentage ) ) );
+					+ ( ( $pack_prices[1] + $pack_prices[0] ) * $win_percentage * ( 1 - $win_percentage ) );
 			}
 			else
 			{
 				$ev = ( ( 2 * $pack_prices[0] + 1 * $pack_prices[1] + 1 * $pack_prices[2] ) * pow( $win_percentage, 3 ) )
 					+ ( ( $pack_prices[0] + $pack_prices[1] + $pack_prices[2] ) *  pow( $win_percentage, 2 ) * ( 1 - $win_percentage ) )
-					+ ( ( $pack_prices[0] + $pack_prices[1] ) * ( $win_percentage * ( 1 - $win_percentage ) ) );
+					+ ( ( $pack_prices[0] + $pack_prices[1] ) * $win_percentage * ( 1 - $win_percentage ) );
 			}
 		} elseif ( $format == "swiss" )
 		{
@@ -138,27 +144,83 @@
 					+ ( $pack_prices[0] * $win_percentage * pow( 1 - $win_percentage, 2 ) );
 			}
 		}
-		elseif ( $format = "6-pack" )
-		{
-			
-		}
-		elseif ( $format = "daily" )
+		elseif ( $format == "16-man" )
 		{
 
 		}
+		elseif ( $format == "daily" )
+		{
+			if ( $entry[0] == $entry[2] && $entry[1] == $entry[3] )
+			{
+				$ev = ( 11 * $pack_prices[0] * pow( $win_percentage, 4 ) )
+					+ ( 6 * $pack_prices[0] * pow( $win_percentage, 3 ) * ( 1 - $win_percentage ) )
+					+ ( 3 * $pack_prices[0] * pow( $win_percentage. 2 ) * pow( 1 - $win_percentage, 2 ) );
+			} elseif ( $entry[0] == $entry[1] && $entry[0] != $entry[3] )
+			{
+				$ev = ( ( 4 * $pack_prices[2] + 7 * $pack_prices[0] ) * pow( $win_percentage, 4 ) )
+					+ ( ( 3 * $pack_prices[2] + 3 * $pack_prices[0] ) * pow( $win_percentage, 3 ) * ( 1 - $win_percentage ) )
+					+ ( ( 1 * $pack_prices[0] + 2 * $pack_prices[0] ) * pow( $win_percentage, 2 ) * pow( 1 - $win_percentage, 2 ) );
+			}
+		}
 
-		return $ev
+		return $ev;
+	}
+
+	function calculate_prize_value_constructed ( $price_list, $prizes, $win_percentage, $format )
+	{
+		$pack_prices = array ( );
+		$ev = 0.00;
+
+		foreach ( $prizes as $pack )
+		{
+			$pack_price = find_price ( $price_list, $pack, "buy" );
+			array_push ( $pack_prices, $pack_price );
+
+		}
+
+		if ( $format == "2-man" )
+		{
+			$ev = ( $pack_prices[2] * $win_percentage );
+		}
+		elseif ( $format == "5-3-2-2" )
+		{
+			$ev = ( ( 3 * $pack_prices[2] + 2 * $pack_prices[1]) * pow( $win_percentage, 3 ) )
+				+ ( ( 2 * $pack_prices[2] + 1 * $pack_prices[1]) * pow( $win_percentage, 2 ) * ( 1 - $win_percentage ) )
+				+ ( ( 1 * $pack_prices[2] + 1 * $pack_prices[1]) * $win_percentage * ( 1 - $win_percentage) );
+		}
+		elseif ( $format == "daily")
+		{
+			$ev = ( ( 7 * $pack_prices[2] + 4 * $pack_prices[1]) * pow( $win_percentage, 4 ) )
+				+ ( ( 4 * $pack_prices[2] + 2 * $pack_prices[1]) * pow( $win_percentage, 3 ) * ( 1 - $win_percentage ) );
+		}
+
+		return $ev;
+	}
+
+	function calculate_entry_value ( $price_list, $entry, $tickets, $source )
+	{
+		$total = 0.00;
+		if ( $source == "owned" )
+		{
+			$price_type = "buy";
+		}
+		elseif ( $source == "bot" )
+		{
+			$price_type = "sell";
+		}
+		elseif ( $source == "wotc" )
+		{
+			$price_type = "wotc";
+		}
+
+		foreach ( $entry as $pack )
+		{
+			$total += find_price ( $price_list, $pack, $price_type );
+		}
+
+		return $total + $tickets;
 	}
 
 	$price_list = get_db_prices ( );
 
-	$entry = array ( "JOU", "BNG", "THS" );
-	$format = "swiss";
-
-	for ( $i = 0.00; $i <= 100.00; $i++ )
-	{ 
-		echo $i . "%: " . 
-			number_format ( calculate_prize_value_draft ( $price_list, $entry, $i / 100.00, $format ), 3 ) . 
-			" tix<br/>";
-	}
 ?>

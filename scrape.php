@@ -53,8 +53,17 @@
 
 	foreach ( $scraped_list as $entry )
 	{
-		$db_query = "INSERT INTO prices ( code, snb_buy, snb_sell ) VALUES ( '"  .
+		if ( $entry[0] == "VMA" || $entry[0] == "MMA" )
+		{
+			$wotc_sell = 6.99;
+		}
+		else
+		{
+			$wotc_sell = 3.99;
+		}
+		$db_query = "INSERT INTO prices ( code, wotc_sell, snb_buy, snb_sell ) VALUES ( '"  .
 			$entry[0] . "', " .
+			$wotc_sell . ", " .
 			$entry[1] . ", " . 
 			$entry[2] . " )";
 		$db_result = $db_connection->query ( $db_query );
